@@ -178,17 +178,29 @@ def nnObjFunction(params, *args):
     new_w2 = np.delete(w2, n_hidden, 1)
     t_hidden = np.zeros((n_hidden, n_hidden))
     tt_hidden = np.zeros((n_hidden, 1))
-
+    sumdeltaw2 = np.zeros((1, n_hidden))
     for i in range(n_train):
-        sumdeltaw2 = np.zeros((1, n_hidden))
-        for l in range(n_class):
-            sumdeltaw2 += np.dot((output[i].reshape(1, -1) - label[i].reshape(1, -1)), new_w2)
+        sumdeltaw2 = np.dot((output[i].reshape(1, -1) - label[i].reshape(1, -1)), new_w2)
         grad_w2 += np.dot((output[i].reshape(1, -1) - label[i].reshape(1, -1)).T, hidden[i].reshape(1, -1))
         t_hidden = np.dot((np.ones((1, n_hidden)) - new_hidden[i].reshape(1, -1)).T, new_hidden[i].reshape(1, -1))
         tt_hidden = np.dot(t_hidden, sumdeltaw2.T)
         grad_w1 += np.dot(tt_hidden, new_train[i].reshape(1, -1))
+
+        print(i, grad_w1 / n_train)
     grad_w1 = (grad_w1 + lambdaval * w1) / n_train
     grad_w2 = (grad_w2 + lambdaval * w2) / n_train
+
+    #
+    #
+    #
+    #
+
+    # Make sure you reshape the gradient matrices to a 1D array. for instance if your gradient matrices are grad_w1 and grad_w2
+    # you would use code similar to the one below to create a flat array
+    #
+    obj_grad = np.array([])
+    obj_grad = np.concatenate((grad_w1.flatten(), grad_w2.flatten()), 0)
+    return (obj_val, obj_grad)
 
     #
     #
