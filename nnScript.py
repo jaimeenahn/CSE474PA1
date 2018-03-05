@@ -168,6 +168,16 @@ def nnObjFunction(params, *args):
             obj_val += label[i][l] * np.log(output[i][l]) + ((1 - label[i][l]) * np.log(1 - output[i][l]))
 
     obj_val = ((-1.0 * obj_val) / n_train)
+    w1_val = 0
+    w2_val = 0
+    for j in range(n_hidden):
+        for i in range(n_input + 1):
+            w1_val += w1[j][i] * w1[j][i]
+    for l in range(n_class):
+        for j in range(n_hidden + 1):
+            w2_val += w2[l][j] * w2[l][j]
+
+    obj_val += lambdaval * (w1_val + w2_val) / (2 * n_train)
 
     grad_w1 = np.zeros((n_hidden, n_input + 1))
     grad_w2 = np.zeros((n_class, n_hidden + 1))
@@ -182,11 +192,10 @@ def nnObjFunction(params, *args):
     for i in range(n_train):
         sumdeltaw2 = np.dot((output[i].reshape(1, -1) - label[i].reshape(1, -1)), new_w2)
         grad_w2 += np.dot((output[i].reshape(1, -1) - label[i].reshape(1, -1)).T, hidden[i].reshape(1, -1))
-        t_hidden = np.dot((np.ones((1, n_hidden)) - new_hidden[i].reshape(1, -1)).T, new_hidden[i].reshape(1, -1))
-        tt_hidden = np.dot(t_hidden, sumdeltaw2.T)
-        grad_w1 += np.dot(tt_hidden, new_train[i].reshape(1, -1))
+        t_hidden = (np.ones((1, n_hidden)) - new_hidden[i].reshape(1, -1)) * new_hidden[i].reshape(1, -1)
+        tt_hidden = t_hidden * sumdeltaw2
+        grad_w1 += np.dot(tt_hidden.T, new_train[i].reshape(1, -1))
 
-        print(i, grad_w1 / n_train)
     grad_w1 = (grad_w1 + lambdaval * w1) / n_train
     grad_w2 = (grad_w2 + lambdaval * w2) / n_train
 
@@ -201,33 +210,6 @@ def nnObjFunction(params, *args):
     obj_grad = np.array([])
     obj_grad = np.concatenate((grad_w1.flatten(), grad_w2.flatten()), 0)
     return (obj_val, obj_grad)
-
-    #
-    #
-    #
-    #
-
-    # Make sure you reshape the gradient matrices to a 1D array. for instance if your gradient matrices are grad_w1 and grad_w2
-    # you would use code similar to the one below to create a flat array
-    #
-    obj_grad = np.array([])
-    obj_grad = np.concatenate((grad_w1.flatten(), grad_w2.flatten()), 0)
-    return (obj_val, obj_grad)
-
-
-n_input = 5
-n_hidden = 3
-n_class = 2
-training_data = np.array([np.linspace(0, 1, num=5), np.linspace(1, 0, num=5)])
-training_label = np.array([0, 1])
-lambdaval = 0
-params = np.linspace(-5, 5, num=26)
-args = (n_input, n_hidden, n_class, training_data, training_label, lambdaval)
-objval, objgrad = nnObjFunction(params, *args)
-print("Objective value:")
-print(objval)
-print("Gradient values: ")
-print(objgrad)
 
 
 def nnPredict(w1, w2, data):
