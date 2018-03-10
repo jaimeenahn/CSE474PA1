@@ -93,7 +93,6 @@ def preprocess():
     # remove features that have same value for all points in the training data
     # convert data to double
     # normalize data to [0,1]
-    
     # Split train_data and train_label into train_data, validation_data and train_label, validation_label
     # replace the next two lines
     validation_data = np.array([])
@@ -163,7 +162,7 @@ def nnObjFunction(params, *args):
             output[i][marks] = sigmoid(hidden[i].dot(np.transpose(w2[marks])))
 
     for i in range(n_train):
-        label[i][training_label[i]] = 1
+        label[i][training_label[i]-1] = 1
         for l in range(n_class):
             obj_val += label[i][l] * np.log(output[i][l]) + ((1 - label[i][l]) * np.log(1 - output[i][l]))
 
@@ -195,6 +194,7 @@ def nnObjFunction(params, *args):
         t_hidden = (np.ones((1, n_hidden)) - new_hidden[i].reshape(1, -1)) * new_hidden[i].reshape(1, -1)
         tt_hidden = t_hidden * sumdeltaw2
         grad_w1 += np.dot(tt_hidden.T, new_train[i].reshape(1, -1))
+        print(i)
 
     grad_w1 = (grad_w1 + lambdaval * w1) / n_train
     grad_w2 = (grad_w2 + lambdaval * w2) / n_train
@@ -210,7 +210,6 @@ def nnObjFunction(params, *args):
     obj_grad = np.array([])
     obj_grad = np.concatenate((grad_w1.flatten(), grad_w2.flatten()), 0)
     return (obj_val, obj_grad)
-
 
 def nnPredict(w1, w2, data):
     """% nnPredict predicts the label of data given the parameter w1, w2 of Neural
@@ -228,10 +227,28 @@ def nnPredict(w1, w2, data):
        
     % Output: 
     % label: a column vector of predicted labels"""
-
+    print(data)
     labels = np.array([])
-    # Your code here
 
+    # Your code here
+    n_test = len(data)
+    n_test_hidden = len(w1)
+    n_test_class - len(w2)
+    new_test = np.concatenate((data, np.ones((n_test, 1))), 1)
+    test_hidden = np.array(np.ones((n_test, n_test_hidden + 1)))
+    test_output = np.zeros((n_test, n_test_class))
+    temp_label = np.zeros((n_test,1))
+
+
+    for i in range(n_test):
+        for mark in range(n_test_hidden):
+            test_hidden[i][mark] = sigmoid(new_test[i].dot(np.transpose(w1[mark])))
+        for marks in range(n_test_class):
+            test_output[i][marks] = sigmoid(test_hidden[i].dot(np.transpose(w2[marks])))
+        temp_label[i][0] = np.argmax(test_output[i])+1
+    labels = temp_label
+    labels.flatten()
+    print(labels)
     return labels
 
 
@@ -245,14 +262,14 @@ train_data, train_label, validation_data, validation_label, test_data, test_labe
 n_input = train_data.shape[1]
 
 # set the number of nodes in hidden unit (not including bias unit)
-n_hidden = 50
+n_test_hidden = 50
 
 # set the number of nodes in output unit
-n_class = 10
+n_test_class = 10
 
 # initialize the weights into some random matrices
-initial_w1 = initializeWeights(n_input, n_hidden)
-initial_w2 = initializeWeights(n_hidden, n_class)
+initial_w1 = initializeWeights(n_input, n_test_hidden)
+initial_w2 = initializeWeights(n_test_hidden, n_test_class)
 
 # unroll 2 weight matrices into single column vector
 initialWeights = np.concatenate((initial_w1.flatten(), initial_w2.flatten()), 0)
@@ -260,7 +277,7 @@ initialWeights = np.concatenate((initial_w1.flatten(), initial_w2.flatten()), 0)
 # set the regularization hyper-parameter
 lambdaval = 0
 
-args = (n_input, n_hidden, n_class, train_data, train_label, lambdaval)
+args = (n_input, n_test_hidden, n_test_class, train_data, train_label, lambdaval)
 # Train Neural Network using fmin_cg or minimize from scipy,optimize module. Check documentation for a working example
 
 opts = {'maxiter': 50}  # Preferred value.
@@ -272,8 +289,8 @@ nn_params = minimize(nnObjFunction, initialWeights, jac=True, args=args, method=
 
 
 # Reshape nnParams from 1D vector into w1 and w2 matrices
-w1 = nn_params.x[0:n_hidden * (n_input + 1)].reshape((n_hidden, (n_input + 1)))
-w2 = nn_params.x[(n_hidden * (n_input + 1)):].reshape((n_class, (n_hidden + 1)))
+w1 = nn_params.x[0:n_test_hidden * (n_input + 1)].reshape((n_test_hidden, (n_input + 1)))
+w2 = nn_params.x[(n_test_hidden * (n_input + 1)):].reshape((n_test_class, (n_test_hidden + 1)))
 
 # Test the computed parameters
 
