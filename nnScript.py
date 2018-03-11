@@ -8,12 +8,11 @@ def initializeWeights(n_in, n_out):
     """
     # initializeWeights return the random weights for Neural Network given the
     # number of node in the input layer and output layer
-
     # Input:
     # n_in: number of nodes of the input layer
     # n_out: number of nodes of the output layer
-       
-    # Output: 
+
+    # Output:
     # W: matrix of random initial weights with size (n_out x (n_in + 1))"""
 
     epsilon = sqrt(6) / sqrt(n_in + n_out + 1)
@@ -25,31 +24,26 @@ def sigmoid(z):
     """# Notice that z can be a scalar, a vector or a matrix
     # return the sigmoid of input z"""
 
-    return  1.0 / (1.0 + np.exp(-1.0 * z))
+    return 1.0 / (1.0 + np.exp(-1.0 * z))
 
 
 def preprocess():
-
-
-
     """ Input:
      Although this function doesn't have any input, you are required to load
      the MNIST data set from file 'mnist_all.mat'.
-
      Output:
      train_data: matrix of training set. Each row of train_data contains
        feature vector of a image
      train_label: vector of label corresponding to each image in the training
        set
-     validation_data: matrix of training set. Each row of validation_data 
+     validation_data: matrix of training set. Each row of validation_data
        contains feature vector of a image
-     validation_label: vector of label corresponding to each image in the 
+     validation_label: vector of label corresponding to each image in the
        training set
-     test_data: matrix of training set. Each row of test_data contains 
+     test_data: matrix of training set. Each row of test_data contains
        feature vector of a image
      test_label: vector of label corresponding to each image in the testing
        set
-
      Things to do for preprocessing step:
      - remove features that have the same value for all data points
            with corresponding labels
@@ -58,7 +52,22 @@ def preprocess():
      - normalize the data to [0, 1]
      - divide the original data set to training, validation and testing set"""
     n_valid = 5000
-    mat = loadmat('mnist_all.mat') #loads the MAT object as a Dictionary
+    #mat = loadmat('mnist_all.mat')  # loads the MAT object as a Dictionary
+    mat = loadmat('mnist_sample.mat')
+
+    length0 = len(mat['train0'])
+    length1 = len(mat['train1'])
+    length2 = len(mat['train2'])
+    length3 = len(mat['train3'])
+    length4 = len(mat['train4'])
+    length5 = len(mat['train5'])
+    length6 = len(mat['train6'])
+    length7 = len(mat['train7'])
+    length8 = len(mat['train8'])
+    length9 = len(mat['train9'])
+
+
+
     train_data = np.concatenate((mat['train0'], mat['train1'],
                                  mat['train2'], mat['train3'],
                                  mat['train4'], mat['train5'],
@@ -93,10 +102,35 @@ def preprocess():
     # remove features that have same value for all points in the training data
     # convert data to double
     # normalize data to [0,1]
+
     # Split train_data and train_label into train_data, validation_data and train_label, validation_label
     # replace the next two lines
-    validation_data = np.array([])
-    validation_label = np.array([])
+    # validation_data = np.array([])
+    # validation_label = np.array([])
+
+    validation_data = np.concatenate((mat['train0'][(length0-500):,:], mat['train1'][(length1-500):,:],
+                                 mat['train2'][(length2-500):,:], mat['train3'][(length3-500):,:],
+                                 mat['train4'][(length4-500):,:], mat['train5'][(length5-500):,:],
+                                 mat['train6'][(length6-500):,:], mat['train7'][(length7-500):,:],
+                                 mat['train8'][(length8-500):,:], mat['train9'][(length9-500):,:]), 0)
+    validation_label = np.concatenate((np.ones((500,1), dtype='uint8'),
+                                 2 * np.ones((500,1), dtype='uint8'),
+                                 3 * np.ones((500,1), dtype='uint8'),
+                                 4 * np.ones((500,1), dtype='uint8'),
+                                 5 * np.ones((500,1), dtype='uint8'),
+                                 6 * np.ones((500,1), dtype='uint8'),
+                                 7 * np.ones((500,1), dtype='uint8'),
+                                 8 * np.ones((500,1), dtype='uint8'),
+                                 9 * np.ones((500,1), dtype='uint8'),
+                                 10 * np.ones((500,1), dtype='uint8')), 0)
+
+    train_data.astype(float)
+    train_label.astype(float)
+    test_data.astype(float)
+    test_label.astype(float)
+    validation_data.astype(float)
+    validation_label.astype(float)
+    print(test_data.dtype)
 
 
     print("preprocess done!")
@@ -109,7 +143,6 @@ def nnObjFunction(params, *args):
     %   likelihood error function with regularization) given the parameters
     %   of Neural Networks, thetraining data, their corresponding training
     %   labels and lambda - regularization hyper-parameter.
-
     % Input:
     % params: vector of weights of 2 matrices w1 (weights of connections from
     %     input layer to hidden layer) and w2 (weights of connections from
@@ -125,14 +158,12 @@ def nnObjFunction(params, *args):
     %     in the vector represents the truth label of its corresponding image.
     % lambda: regularization hyper-parameter. This value is used for fixing the
     %     overfitting problem.
-
     % Output:
     % obj_val: a scalar value representing value of error function
     % obj_grad: a SINGLE vector of gradient value of error function
     % NOTE: how to compute obj_grad
     % Use backpropagation algorithm to compute the gradient of error function
     % for each weights in weight matrices.
-
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % reshape 'params' vector into 2 matrices of weight w1 and w2
     % w1: matrix of weights of connections from input layer to hidden layers.
@@ -194,7 +225,6 @@ def nnObjFunction(params, *args):
         t_hidden = (np.ones((1, n_hidden)) - new_hidden[i].reshape(1, -1)) * new_hidden[i].reshape(1, -1)
         tt_hidden = t_hidden * sumdeltaw2
         grad_w1 += np.dot(tt_hidden.T, new_train[i].reshape(1, -1))
-        print(i)
 
     grad_w1 = (grad_w1 + lambdaval * w1) / n_train
     grad_w2 = (grad_w2 + lambdaval * w2) / n_train
@@ -211,44 +241,46 @@ def nnObjFunction(params, *args):
     obj_grad = np.concatenate((grad_w1.flatten(), grad_w2.flatten()), 0)
     return (obj_val, obj_grad)
 
+
 def nnPredict(w1, w2, data):
     """% nnPredict predicts the label of data given the parameter w1, w2 of Neural
     % Network.
-
     % Input:
     % w1: matrix of weights of connections from input layer to hidden layers.
-    %     w1(i, j) represents the weight of connection from unit i in input 
+    %     w1(i, j) represents the weight of connection from unit i in input
     %     layer to unit j in hidden layer.
     % w2: matrix of weights of connections from hidden layer to output layers.
-    %     w2(i, j) represents the weight of connection from unit i in input 
+    %     w2(i, j) represents the weight of connection from unit i in input
     %     layer to unit j in hidden layer.
-    % data: matrix of data. Each row of this matrix represents the feature 
+    % data: matrix of data. Each row of this matrix represents the feature
     %       vector of a particular image
-       
-    % Output: 
+
+    % Output:
     % label: a column vector of predicted labels"""
-    print(data)
+
     labels = np.array([])
-
     # Your code here
-    n_test = len(data)
-    n_test_hidden = len(w1)
-    n_test_class - len(w2)
-    new_test = np.concatenate((data, np.ones((n_test, 1))), 1)
-    test_hidden = np.array(np.ones((n_test, n_test_hidden + 1)))
-    test_output = np.zeros((n_test, n_test_class))
-    temp_label = np.zeros((n_test,1))
 
+    n_test = len(data)
+    n_hidden_test = len(w1)
+    n_class_test = len(w2)
+    new_test = np.concatenate((data, np.ones((n_test, 1))), 1)
+    hidden_test = np.array(np.ones((n_test, n_hidden_test + 1)))
+    output_test = np.zeros((n_test, n_class_test))
+    label_test = np.zeros((n_test, 1))
 
     for i in range(n_test):
-        for mark in range(n_test_hidden):
-            test_hidden[i][mark] = sigmoid(new_test[i].dot(np.transpose(w1[mark])))
-        for marks in range(n_test_class):
-            test_output[i][marks] = sigmoid(test_hidden[i].dot(np.transpose(w2[marks])))
-        temp_label[i][0] = np.argmax(test_output[i])+1
-    labels = temp_label
+        for mark in range(n_hidden_test):
+            hidden_test[i][mark] = sigmoid(new_test[i].dot(np.transpose(w1[mark])))
+        for marks in range(n_class_test):
+            output_test[i][marks] = sigmoid(hidden_test[i].dot(np.transpose(w2[marks])))
+            label_test[i][0] = np.argmax(output_test[i]) + 1
+
+    labels = label_test
     labels.flatten()
+    labels.T
     print(labels)
+
     return labels
 
 
@@ -262,14 +294,14 @@ train_data, train_label, validation_data, validation_label, test_data, test_labe
 n_input = train_data.shape[1]
 
 # set the number of nodes in hidden unit (not including bias unit)
-n_test_hidden = 50
+n_hidden = 50
 
 # set the number of nodes in output unit
-n_test_class = 10
+n_class = 10
 
 # initialize the weights into some random matrices
-initial_w1 = initializeWeights(n_input, n_test_hidden)
-initial_w2 = initializeWeights(n_test_hidden, n_test_class)
+initial_w1 = initializeWeights(n_input, n_hidden)
+initial_w2 = initializeWeights(n_hidden, n_class)
 
 # unroll 2 weight matrices into single column vector
 initialWeights = np.concatenate((initial_w1.flatten(), initial_w2.flatten()), 0)
@@ -277,7 +309,7 @@ initialWeights = np.concatenate((initial_w1.flatten(), initial_w2.flatten()), 0)
 # set the regularization hyper-parameter
 lambdaval = 0
 
-args = (n_input, n_test_hidden, n_test_class, train_data, train_label, lambdaval)
+args = (n_input, n_hidden, n_class, train_data, train_label, lambdaval)
 # Train Neural Network using fmin_cg or minimize from scipy,optimize module. Check documentation for a working example
 
 opts = {'maxiter': 50}  # Preferred value.
@@ -289,8 +321,8 @@ nn_params = minimize(nnObjFunction, initialWeights, jac=True, args=args, method=
 
 
 # Reshape nnParams from 1D vector into w1 and w2 matrices
-w1 = nn_params.x[0:n_test_hidden * (n_input + 1)].reshape((n_test_hidden, (n_input + 1)))
-w2 = nn_params.x[(n_test_hidden * (n_input + 1)):].reshape((n_test_class, (n_test_hidden + 1)))
+w1 = nn_params.x[0:n_hidden * (n_input + 1)].reshape((n_hidden, (n_input + 1)))
+w2 = nn_params.x[(n_hidden * (n_input + 1)):].reshape((n_class, (n_hidden + 1)))
 
 # Test the computed parameters
 
