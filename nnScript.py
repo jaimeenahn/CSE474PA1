@@ -10,7 +10,7 @@ def initializeWeights(n_in, n_out):
     # number of node in the input layer and output layer
     # Input:
     # n_in: number of nodes of the input layer
-    # n_out: number of nodes of the output layer
+    # n_out: number of nodes of the output0 layer
 
     # Output:
     # W: matrix of random initial weights with size (n_out x (n_in + 1))"""
@@ -68,7 +68,7 @@ def preprocess():
 
 
 
-    train_data = np.concatenate((mat['train0'], mat['train1'],
+    ttrain_data = np.concatenate((mat['train0'], mat['train1'],
                                  mat['train2'], mat['train3'],
                                  mat['train4'], mat['train5'],
                                  mat['train6'], mat['train7'],
@@ -93,7 +93,7 @@ def preprocess():
                                  8 * np.ones((mat['test7'].shape[0], 1), dtype='uint8'),
                                  9 * np.ones((mat['test8'].shape[0], 1), dtype='uint8'),
                                  10 * np.ones((mat['test9'].shape[0], 1), dtype='uint8')), 0)
-    test_data = np.concatenate((mat['test0'], mat['test1'],
+    ttest_data = np.concatenate((mat['test0'], mat['test1'],
                                 mat['test2'], mat['test3'],
                                 mat['test4'], mat['test5'],
                                 mat['test6'], mat['test7'],
@@ -108,7 +108,7 @@ def preprocess():
     # validation_data = np.array([])
     # validation_label = np.array([])
 
-    validation_data = np.concatenate((mat['train0'][(length0-500):,:], mat['train1'][(length1-500):,:],
+    tvalidation_data = np.concatenate((mat['train0'][(length0-500):,:], mat['train1'][(length1-500):,:],
                                  mat['train2'][(length2-500):,:], mat['train3'][(length3-500):,:],
                                  mat['train4'][(length4-500):,:], mat['train5'][(length5-500):,:],
                                  mat['train6'][(length6-500):,:], mat['train7'][(length7-500):,:],
@@ -124,13 +124,10 @@ def preprocess():
                                  9 * np.ones((500,1), dtype='uint8'),
                                  10 * np.ones((500,1), dtype='uint8')), 0)
 
-    train_data.astype(float)
-    train_label.astype(float)
-    test_data.astype(float)
-    test_label.astype(float)
-    validation_data.astype(float)
-    validation_label.astype(float)
-    print(test_data.dtype)
+    train_data = ttrain_data.astype(np.float64)
+    test_data = ttest_data.astype(np.float64)
+    validation_data = tvalidation_data.astype(np.float64)
+
 
 
     print("preprocess done!")
@@ -274,11 +271,10 @@ def nnPredict(w1, w2, data):
             hidden_test[i][mark] = sigmoid(new_test[i].dot(np.transpose(w1[mark])))
         for marks in range(n_class_test):
             output_test[i][marks] = sigmoid(hidden_test[i].dot(np.transpose(w2[marks])))
-            label_test[i][0] = np.argmax(output_test[i]) + 1
+        label_test[i][0] = np.argmax(output_test[i]) + 1
 
     labels = label_test
     labels.flatten()
-    labels.T
     print(labels)
 
     return labels
