@@ -27,7 +27,7 @@ def sigmoid(z):
     """# Notice that z can be a scalar, a vector or a matrix
     # return the sigmoid of input z"""
 
-    return  # your code here
+    return  1.0 / (1.0 + np.exp(-1.0 * z))
 
 
 def preprocess():
@@ -68,11 +68,28 @@ def preprocess():
     # remove features that have same value for all points in the training data
     # convert data to double
     # normalize data to [0,1]
-    
+
+    alldata = np.concatenate((ttrain_data, ttest_data), 0)
+
+    temp_a = np.all(alldata == alldata[0, :], axis=0)
+    temp_b = np.where(temp_a == True)
+    ttrain_data = np.delete(ttrain_data, temp_b, 1)
+    ttest_data = np.delete(ttest_data, temp_b, 1)
+
+    train_data = ttrain_data.astype(np.float64)
+    test_data = ttest_data.astype(np.float64)
+
     # Split train_data and train_label into train_data, validation_data and train_label, validation_label
     # replace the next two lines
     validation_data = np.array([])
     validation_label = np.array([])
+
+    t_length = len(train_data)
+    v_index = np.random.randint(t_length, size=t_length // 6)
+    validation_data = train_data[v_index]
+    validation_label = train_label[v_index]
+    train_data = np.delete(train_data, v_index, 0)
+    train_label = np.delete(train_label, v_index, 0)
 
 
     print ("preprocess done!")
@@ -81,9 +98,9 @@ def preprocess():
 
 
 def nnObjFunction(params, *args):
-    """% nnObjFunction computes the value of objective function (negative log 
-    %   likelihood error function with regularization) given the parameters 
-    %   of Neural Networks, thetraining data, their corresponding training 
+    """% nnObjFunction computes the value of objective function (negative log
+    %   likelihood error function with regularization) given the parameters
+    %   of Neural Networks, thetraining data, their corresponding training
     %   labels and lambda - regularization hyper-parameter.
 
     % Input:
@@ -101,8 +118,8 @@ def nnObjFunction(params, *args):
     %     in the vector represents the truth label of its corresponding image.
     % lambda: regularization hyper-parameter. This value is used for fixing the
     %     overfitting problem.
-       
-    % Output: 
+
+    % Output:
     % obj_val: a scalar value representing value of error function
     % obj_grad: a SINGLE vector of gradient value of error function
     % NOTE: how to compute obj_grad
@@ -112,10 +129,10 @@ def nnObjFunction(params, *args):
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % reshape 'params' vector into 2 matrices of weight w1 and w2
     % w1: matrix of weights of connections from input layer to hidden layers.
-    %     w1(i, j) represents the weight of connection from unit j in input 
+    %     w1(i, j) represents the weight of connection from unit j in input
     %     layer to unit i in hidden layer.
     % w2: matrix of weights of connections from hidden layer to output layers.
-    %     w2(i, j) represents the weight of connection from unit j in hidden 
+    %     w2(i, j) represents the weight of connection from unit j in hidden
     %     layer to unit i in output layer."""
 
     n_input, n_hidden, n_class, training_data, training_label, lambdaval = args
@@ -125,11 +142,55 @@ def nnObjFunction(params, *args):
     obj_val = 0
 
     # Your code here
-    #
-    #
-    #
-    #
-    #
+    new_train = np.concatenate((training_data, np.ones((len(training_data), 1))), 1)
+    n_train = len(training_data)  # number of input
+    hidden = np.array(np.ones((n_train, n_hidden + 1)))
+    output = np.zeros((n_train, n_class))
+    label = np.zeros((n_train, n_class))
+
+    for i in range(n_train):
+        for mark in range(n_hidden):
+            hidden[i][mark] = sigmoid(new_train[i].dot(np.transpose(w1[mark])))
+        for marks in range(n_class):
+            output[i][marks] = sigmoid(hidden[i].dot(np.transpose(w2[marks])))
+
+    for i in range(n_train):
+        label[i][int(training_label[i])] = 1
+        for l in range(n_class):
+            obj_val += label[i][l] * np.log(output[i][l]) + ((1 - label[i][l]) * np.log(1 - output[i][l]))
+
+    obj_val = ((-1.0 * obj_val) / n_train)
+    w1_val = 0
+    w2_val = 0
+    for j in range(n_hidden):
+        for i in range(n_input + 1):
+            w1_val += w1[j][i] * w1[j][i]
+    for l in range(n_class):
+        for j in range(n_hidden + 1):
+            w2_val += w2[l][j] * w2[l][j]
+
+    obj_val += lambdaval * (w1_val + w2_val) / (2 * n_train)
+
+    grad_w1 = np.zeros((n_hidden, n_input + 1))
+    grad_w2 = np.zeros((n_class, n_hidden + 1))
+    new_hidden = np.empty_like(hidden)
+    new_input = np.empty_like(new_train)
+    new_w2 = np.empty_like(w2)
+    new_hidden = np.delete(hidden, n_hidden, 1)
+    new_w2 = np.delete(w2, n_hidden, 1)
+    t_hidden = np.zeros((n_hidden, n_hidden))
+    tt_hidden = np.zeros((n_hidden, 1))
+    sumdeltaw2 = np.zeros((1, n_hidden))
+    for i in range(n_train):
+        sumdeltaw2 = np.dot((output[i].reshape(1, -1) - label[i].reshape(1, -1)), new_w2)
+        grad_w2 += np.dot((output[i].reshape(1, -1) - label[i].reshape(1, -1)).T, hidden[i].reshape(1, -1))
+        t_hidden = (np.ones((1, n_hidden)) - new_hidden[i].reshape(1, -1)) * new_hidden[i].reshape(1, -1)
+        tt_hidden = t_hidden * sumdeltaw2
+        grad_w1 += np.dot(tt_hidden.T, new_train[i].reshape(1, -1))
+        print(i)
+
+    grad_w1 = (grad_w1 + lambdaval * w1) / n_train
+    grad_w2 = (grad_w2 + lambdaval * w2) / n_train
 
 
 
@@ -137,7 +198,7 @@ def nnObjFunction(params, *args):
     # you would use code similar to the one below to create a flat array
     # obj_grad = np.concatenate((grad_w1.flatten(), grad_w2.flatten()),0)
     obj_grad = np.array([])
-
+    obj_grad = np.concatenate((grad_w1.flatten(), grad_w2.flatten()), 0)
     return (obj_val, obj_grad)
 
 
@@ -154,13 +215,29 @@ def nnPredict(w1, w2, data):
     %     layer to unit j in hidden layer.
     % data: matrix of data. Each row of this matrix represents the feature 
     %       vector of a particular image
-       
-    % Output: 
+
+    % Output:
     % label: a column vector of predicted labels"""
-
+    print(data)
     labels = np.array([])
-    # Your code here
 
+    # Your code here
+    n_test = len(data)
+    n_test_hidden = len(w1)
+    n_test_class = len(w2)
+    new_test = np.concatenate((data, np.ones((n_test, 1))), 1)
+    test_hidden = np.array(np.ones((n_test, n_test_hidden + 1)))
+    test_output = np.zeros((n_test, n_test_class))
+    temp_label = np.zeros((n_test, 1))
+
+    for i in range(n_test):
+        for mark in range(n_test_hidden):
+            test_hidden[i][mark] = sigmoid(new_test[i].dot(np.transpose(w1[mark])))
+        for marks in range(n_test_class):
+            test_output[i][marks] = sigmoid(test_hidden[i].dot(np.transpose(w2[marks])))
+        temp_label[i][0] = float(np.argmax(test_output[i]))
+    labels = temp_label
+    labels.flatten()
     return labels
 
 

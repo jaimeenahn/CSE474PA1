@@ -55,7 +55,7 @@ def preprocess():
     #mat = loadmat('mnist_all.mat')  # loads the MAT object as a Dictionary
     mat = loadmat('mnist_sample.mat')
 
-    length0 = len(mat['train0'])
+    """length0 = len(mat['train0'])
     length1 = len(mat['train1'])
     length2 = len(mat['train2'])
     length3 = len(mat['train3'])
@@ -64,7 +64,7 @@ def preprocess():
     length6 = len(mat['train6'])
     length7 = len(mat['train7'])
     length8 = len(mat['train8'])
-    length9 = len(mat['train9'])
+    length9 = len(mat['train9'])"""
 
 
 
@@ -102,33 +102,27 @@ def preprocess():
     # remove features that have same value for all points in the training data
     # convert data to double
     # normalize data to [0,1]
+    alldata = np.concatenate((ttrain_data, ttest_data),0)
 
-    # Split train_data and train_label into train_data, validation_data and train_label, validation_label
-    # replace the next two lines
-    # validation_data = np.array([])
-    # validation_label = np.array([])
-
-    tvalidation_data = np.concatenate((mat['train0'][(length0-500):,:], mat['train1'][(length1-500):,:],
-                                 mat['train2'][(length2-500):,:], mat['train3'][(length3-500):,:],
-                                 mat['train4'][(length4-500):,:], mat['train5'][(length5-500):,:],
-                                 mat['train6'][(length6-500):,:], mat['train7'][(length7-500):,:],
-                                 mat['train8'][(length8-500):,:], mat['train9'][(length9-500):,:]), 0)
-    validation_label = np.concatenate((np.ones((500,1), dtype='uint8'),
-                                 2 * np.ones((500,1), dtype='uint8'),
-                                 3 * np.ones((500,1), dtype='uint8'),
-                                 4 * np.ones((500,1), dtype='uint8'),
-                                 5 * np.ones((500,1), dtype='uint8'),
-                                 6 * np.ones((500,1), dtype='uint8'),
-                                 7 * np.ones((500,1), dtype='uint8'),
-                                 8 * np.ones((500,1), dtype='uint8'),
-                                 9 * np.ones((500,1), dtype='uint8'),
-                                 10 * np.ones((500,1), dtype='uint8')), 0)
+    temp_a = np.all(alldata == alldata[0,:], axis = 0)
+    temp_b = np.where(temp_a == True)
+    ttrain_data = np.delete(ttrain_data, temp_b, 1)
+    ttest_data = np.delete(ttest_data, temp_b, 1)
 
     train_data = ttrain_data.astype(np.float64)
     test_data = ttest_data.astype(np.float64)
-    validation_data = tvalidation_data.astype(np.float64)
 
+    # Split train_data and train_label into train_data, validation_data and train_label, validation_label
+    # replace the next two lines
+    validation_data = np.array([])
+    validation_label = np.array([])
 
+    t_length = len(train_data)
+    v_index = np.random.randint(t_length, size=t_length//6)
+    validation_data = train_data[v_index]
+    validation_label = train_label[v_index]
+    train_data = np.delete(train_data, v_index, 0)
+    train_label = np.delete(train_label, v_index, 0)
 
     print("preprocess done!")
 
@@ -204,12 +198,11 @@ def nnObjFunction(params, *args):
         for j in range(n_hidden + 1):
             w2_val += w2[l][j] * w2[l][j]
 
-    obj_val += lambdaval * (w1_val + w2_val) / (2 * n_train)
+    obj_val += lambdaval * ((w1_val + w2_val) / (2 * n_train))
 
     grad_w1 = np.zeros((n_hidden, n_input + 1))
     grad_w2 = np.zeros((n_class, n_hidden + 1))
     new_hidden = np.empty_like(hidden)
-    new_input = np.empty_like(new_train)
     new_w2 = np.empty_like(w2)
     new_hidden = np.delete(hidden, n_hidden, 1)
     new_w2 = np.delete(w2, n_hidden, 1)
@@ -275,7 +268,6 @@ def nnPredict(w1, w2, data):
 
     labels = label_test
     labels.flatten()
-    print(labels)
 
     return labels
 
