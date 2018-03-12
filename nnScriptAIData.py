@@ -90,6 +90,9 @@ def preprocess():
     validation_label = train_label[v_index]
     train_data = np.delete(train_data, v_index, 0)
     train_label = np.delete(train_label, v_index, 0)
+    
+    train_data = train_data/255
+    validation_data = validation_data/255
 
 
     print ("preprocess done!")
